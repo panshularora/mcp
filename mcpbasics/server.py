@@ -1,6 +1,6 @@
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("practice")
+mcp = FastMCP("mcpbasics")
 
 @mcp.tool()
 def add(a: int, b: int):
