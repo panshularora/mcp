@@ -81,6 +81,57 @@ def create_dir(path:str):
     except Exception as e:
         return str(e)
 
+import shutil
+@mcp.tool()
+def move_file(source:str, destination:str):
+    """moves a file """
+    src = get_safe_path(source)
+    dst = get_safe_path(destination)
+
+    if not src.exists():
+        return "file does not exists"
+    shutil.move(src, dst)
+    return "file move to the destination"
+
+
+@mcp.tool()
+def copy_file(source: str, destination: str):
+    """Copy a file."""
+
+    src = get_safe_path(source)
+    dst = get_safe_path(destination)
+
+    if not src.exists():
+        return "Source file not found."
+
+    shutil.copy2(src, dst)
+
+    return "File copied successfully."
+
+
+from datetime import datetime
+
+@mcp.tool()
+def file_info(path: str):
+    """Get information about a file."""
+
+    file_path = get_safe_path(path)
+
+    if not file_path.exists():
+        return "File not found."
+
+    stat = file_path.stat()
+
+    return {
+        "name": file_path.name,
+        "size": stat.st_size,
+        "modified": datetime.fromtimestamp(
+            stat.st_mtime
+        ).isoformat(),
+        "is_file": file_path.is_file(),
+        "is_directory": file_path.is_dir(),
+    }
+
 
 if __name__ == "__main__":
     mcp.run()

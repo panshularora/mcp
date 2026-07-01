@@ -16,52 +16,90 @@ async def main():
         args=[server_path],
     )
 
-    print("Connecting to FileAssisstant server...")
     async with stdio_client(server) as (read, write):
         async with ClientSession(read, write) as session:
+
             await session.initialize()
-            print("Connected!")
 
-            # Print available tools
-            print("\nAvailable Tools:")
-            tools_resp = await session.list_tools()
-            for tool in tools_resp.tools:
-                print(f"- {tool.name}: {tool.description}")
+            print("Connected to File Assistant MCP Server")
 
-            print("\nRunning test actions...")
+            while True:
 
-            # 1. List files
-            print("\n--- Listing Files ---")
-            list_res = await session.call_tool("list_files", {})
-            print("Result:", list_res.content[0].text)
+                # Fetch all available tools
+                tools = await session.list_tools()
 
-            # 2. Write file
-            print("\n--- Writing test.txt ---")
-            write_res = await session.call_tool(
-                "write_file",
-                {"path": "test.txt", "content": "Hello from FileAssisstant client!"},
-            )
-            print("Result:", write_res.content[0].text)
+                print("\nAvailable Tools:")
+                for tool in tools.tools:
+                    print(f"- {tool.name}")
 
-            # 3. List files again
-            print("\n--- Listing Files (after write) ---")
-            list_res = await session.call_tool("list_files", {})
-            print("Result:", list_res.content[0].text)
+                tool_name = input("\nEnter tool name (or 'exit'): ").strip()
 
-            # 4. Read file
-            print("\n--- Reading test.txt ---")
-            read_res = await session.call_tool("read_file", {"path": "test.txt"})
-            print("Result:", read_res.content[0].text)
+                if tool_name.lower() == "exit":
+                    print("Goodbye!")
+                    break
 
-            # 5. Try invalid path (security check)
-            print("\n--- Testing Path Traversal Protection ---")
-            traversal_res = await session.call_tool(
-                "read_file", {"path": "../server.py"}
-            )
-            print(
-                "Result (should be 'Invalid Path'):",
-                traversal_res.content[0].text,
-            )
+                # Find the selected tool
+                selected_tool = None
+
+                for tool in tools.tools:
+                    if tool.name == tool_name:
+                        selected_tool = tool
+                        break
+
+                if selected_tool is None:
+                    print("Tool not found.")
+                    continue
+
+                # Show tool info
+                print(f"\nTool: {selected_tool.name}")
+                print(selected_tool.description)
+
+                # Build arguments dynamically
+                schema = selected_tool.inputSchema
+
+                arguments = {}
+
+                properties = schema.get("properties", {})
+
+                if properties:
+                    print("\nEnter arguments:")
+
+                for parameter, details in properties.items():
+
+                    parameter_type = details.get("type", "string")
+
+                    value = input(f"{parameter} ({parameter_type}): ")
+
+                    # Convert common primitive types
+                    if parameter_type == "integer":
+                        value = int(value)
+
+                    elif parameter_type == "number":
+                        value = float(value)
+
+                    elif parameter_type == "boolean":
+                        value = value.lower() in (
+                            "true",
+                            "1",
+                            "yes",
+                            "y",
+                        )
+
+                    arguments[parameter] = value
+
+                # Call tool
+                try:
+                    result = await session.call_tool(
+                        selected_tool.name,
+                        arguments,
+                    )
+
+                    print("\n========== RESULT ==========")
+                    print(result)
+                    print("============================")
+
+                except Exception as e:
+                    print(f"\nError: {e}")
 
 
 if __name__ == "__main__":
