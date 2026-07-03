@@ -21,7 +21,7 @@ async def main():
 
             await session.initialize()
 
-            print("Connected to File Assistant MCP Server")
+            print("✅ Connected to File Assistant MCP Server")
 
             while True:
 
@@ -35,7 +35,7 @@ async def main():
                 tool_name = input("\nEnter tool name (or 'exit'): ").strip()
 
                 if tool_name.lower() == "exit":
-                    print("Goodbye!")
+                    print("👋 Goodbye!")
                     break
 
                 # Find the selected tool
@@ -47,7 +47,7 @@ async def main():
                         break
 
                 if selected_tool is None:
-                    print("Tool not found.")
+                    print("❌ Tool not found.")
                     continue
 
                 # Show tool info
